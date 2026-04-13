@@ -1,4 +1,4 @@
-package com.sports.NetsCricket.controller;
+package com.sports.NetsCricket.Controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
