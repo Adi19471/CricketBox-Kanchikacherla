@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Success</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            text-align: center;
+            padding-top: 100px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            width: 400px;
+            margin: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .success {
+            color: green;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .icon {
+            font-size: 60px;
+            color: green;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="icon">✔</div>
+    <div class="success">Payment Successful!</div>
+
+    <p>Your booking/payment has been completed successfully.</p>
+
+    <button class="btn" onclick="goHome()">Go to Home</button>
+</div>
+
+<script>
+function goHome() {
+    window.location.href = "/";
+}
+</script>
+
+</body>
+</html>
