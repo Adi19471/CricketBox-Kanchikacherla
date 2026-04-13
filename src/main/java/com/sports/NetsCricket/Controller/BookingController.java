@@ -50,6 +50,8 @@ public class BookingController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
     
+    
+    
     @PostMapping("/booked-slots")
     public ResponseEntity<Response> getBookedSlots(@RequestBody Map<String, String> request) {
 
