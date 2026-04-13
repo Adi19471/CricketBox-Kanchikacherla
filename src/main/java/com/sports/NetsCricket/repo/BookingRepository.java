@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.sports.NetsCricket.entity.Booking;
 
@@ -30,6 +31,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             LocalTime endTime
     );
 
-    // ✅ Date-wise bookings (for reports)
-    List<Booking> findByBookingDate(LocalDate date);
+    
+    @Query("SELECT b FROM Booking b WHERE b.bookingDate = :date")
+    List<Booking> findByBookingDate(@Param("date") LocalDate date);
 }

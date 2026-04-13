@@ -1,7 +1,10 @@
 package com.sports.NetsCricket.service;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -137,6 +140,37 @@ public class BookingService implements IBookingService {
         } catch (Exception e) {
             response.setStatusCode(500);
             response.setMessage(e.getMessage());
+        }
+
+        return response;
+    }
+    
+    
+    @Override
+    public Response getBookedSlots(LocalDate bookingDate) {
+
+        Response response = new Response();
+
+        try {
+
+            List<Booking> bookings = bookingRepository.findByBookingDate(bookingDate);
+
+            // Convert to simple DTO 
+            List<Map<String, Object>> slots = bookings.stream().map(b -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("startTime", b.getStartTime());
+                map.put("endTime", b.getEndTime());
+                return map;
+            }).toList();
+
+            response.setStatusCode(200);
+            response.setMessage("Booked slots fetched");
+            response.setData(slots);
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage(e.getMessage());
+            e.printStackTrace();
         }
 
         return response;

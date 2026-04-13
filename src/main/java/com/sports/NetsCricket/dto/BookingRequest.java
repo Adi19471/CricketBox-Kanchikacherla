@@ -11,4 +11,5 @@ public class BookingRequest {
     private LocalDate bookingDate;
     private LocalTime startTime;
     private LocalTime endTime;
+    private int number;
 }

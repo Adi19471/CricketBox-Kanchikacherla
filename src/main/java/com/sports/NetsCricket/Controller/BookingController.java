@@ -1,9 +1,18 @@
 package com.sports.NetsCricket.Controller;
 
+import java.time.LocalDate;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.sports.NetsCricket.dto.BookingRequest;
 import com.sports.NetsCricket.dto.Response;
@@ -38,6 +47,15 @@ public class BookingController {
     public ResponseEntity<Response> cancelBooking(@PathVariable Long id) {
 
         Response response = bookingService.cancelBooking(id);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+    
+    @PostMapping("/booked-slots")
+    public ResponseEntity<Response> getBookedSlots(@RequestBody Map<String, String> request) {
+
+        LocalDate date = LocalDate.parse(request.get("bookingDate"));
+
+        Response response = bookingService.getBookedSlots(date);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }
