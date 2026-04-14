@@ -16,7 +16,7 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // React URL
+        configuration.setAllowedOrigins(List.of("http://localhost:8080","http://localhost:3000")); // React URL
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -27,3 +27,4 @@ public class CorsConfig {
         return source;
     }
 }
+
