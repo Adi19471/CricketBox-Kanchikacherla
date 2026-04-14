@@ -3,6 +3,7 @@ package com.sports.NetsCricket.service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -160,7 +161,10 @@ public class BookingService implements IBookingService {
 
         try {
 
-            // ✅ 1. Get working hours (from master table)
+            // ✅ 12-hour formatter
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+
+            // 1. Get working hours
             String day = bookingDate.getDayOfWeek().name();
 
             WorkingHours wh = workingHoursRepository.findByDayOfWeek(day)
@@ -168,13 +172,13 @@ public class BookingService implements IBookingService {
 
             LocalTime start = wh.getStartTime();
             LocalTime end = wh.getEndTime();
-            int duration = wh.getSlotDuration(); // ex: 30 mins
+            int duration = wh.getSlotDuration();
 
-            // ✅ 2. Get booked slots
+            // 2. Get booked slots
             List<Booking> bookings = bookingRepository.findByBookingDate(bookingDate);
 
-            // ✅ 3. Generate ALL slots (this is your allSlots)
-            List<Map<String, String>> allSlots = new ArrayList<>();
+            // 3. Generate ALL slots (with session + price)
+            List<Map<String, Object>> allSlots = new ArrayList<>();
 
             LocalTime temp = start;
 
@@ -182,36 +186,48 @@ public class BookingService implements IBookingService {
 
                 LocalTime next = temp.plusMinutes(duration);
 
-                Map<String, String> slot = new HashMap<>();
-                slot.put("startTime", temp.toString());
-                slot.put("endTime", next.toString());
+                Map<String, Object> slot = new HashMap<>();
+
+                slot.put("startTime", temp.format(formatter));
+                slot.put("endTime", next.format(formatter));
+
+                // ✅ session
+                String session = temp.isBefore(LocalTime.NOON) ? "MORNING" : "AFTERNOON";
+                slot.put("session", session);
+
+                // ✅ price from DB
+                double price = temp.isBefore(LocalTime.NOON)
+                        ? (wh.getMorningPrice() != null ? wh.getMorningPrice() : 0)
+                        : (wh.getAfternoonPrice() != null ? wh.getAfternoonPrice() : 0);
+
+                slot.put("price", price);
 
                 allSlots.add(slot);
 
                 temp = next;
             }
 
-            // ✅ 4. Booked slots
+            // 4. Booked slots (12-hour format)
             List<Map<String, String>> bookedSlots = bookings.stream().map(b -> {
                 Map<String, String> map = new HashMap<>();
-                map.put("startTime", b.getStartTime().toString());
-                map.put("endTime", b.getEndTime().toString());
+                map.put("startTime", b.getStartTime().format(formatter));
+                map.put("endTime", b.getEndTime().format(formatter));
                 return map;
             }).toList();
 
-            // ✅ 5. Available slots (remove overlaps)
-            List<Map<String, String>> availableSlots = allSlots.stream()
+            // 5. Available slots (with session + price retained)
+            List<Map<String, Object>> availableSlots = allSlots.stream()
                     .filter(slot -> bookings.stream().noneMatch(b ->
                             isOverlap(
-                                    slot.get("startTime"),
-                                    slot.get("endTime"),
-                                    b.getStartTime().toString(),
-                                    b.getEndTime().toString()
+                                    LocalTime.parse((String) slot.get("startTime"), formatter),
+                                    LocalTime.parse((String) slot.get("endTime"), formatter),
+                                    b.getStartTime(),
+                                    b.getEndTime()
                             )
                     ))
                     .toList();
 
-            // ✅ 6. Final response
+            // 6. Final response
             Map<String, Object> result = new HashMap<>();
             result.put("booked", bookedSlots);
             result.put("available", availableSlots);
@@ -228,15 +244,9 @@ public class BookingService implements IBookingService {
 
         return response;
     }
-    
-    
-    private boolean isOverlap(String s1, String e1, String s2, String e2) {
 
-        LocalTime start1 = LocalTime.parse(s1);
-        LocalTime end1 = LocalTime.parse(e1);
-        LocalTime start2 = LocalTime.parse(s2);
-        LocalTime end2 = LocalTime.parse(e2);
+	public boolean isOverlap(LocalTime start1, LocalTime end1, LocalTime start2, LocalTime end2) {
 
-        return start1.isBefore(end2) && start2.isBefore(end1);
-    }
+		return !(end1.isBefore(start2) || start1.isAfter(end2));
+	}
 }

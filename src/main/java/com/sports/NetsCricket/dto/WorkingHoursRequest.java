@@ -6,6 +6,10 @@ public class WorkingHoursRequest {
     private String startTime;   // 08:00
     private String endTime;     // 20:00
     private Integer slotDuration; // 30
+    
+    private Double morningPrice;
+    private Double afternoonPrice;
+    
 	public String getDayOfWeek() {
 		return dayOfWeek;
 	}
@@ -30,6 +34,21 @@ public class WorkingHoursRequest {
 	public void setSlotDuration(Integer slotDuration) {
 		this.slotDuration = slotDuration;
 	}
+	
+	public Double getMorningPrice() {
+		return morningPrice;
+	}
 
+	public void setMorningPrice(Double morningPrice) {
+		this.morningPrice = morningPrice;
+	}
+
+	public Double getAfternoonPrice() {
+		return afternoonPrice;
+	}
+
+	public void setAfternoonPrice(Double afternoonPrice) {
+		this.afternoonPrice = afternoonPrice;
+	}
     
 }

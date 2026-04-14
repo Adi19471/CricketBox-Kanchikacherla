@@ -1,6 +1,7 @@
 package com.sports.NetsCricket.service.impl;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,15 +31,27 @@ public class WorkingHoursService implements IWorkingHoursService{
 	                .findByDayOfWeek(day)
 	                .orElse(new WorkingHours());
 
+	        // ✅ 12-hour formatter
+	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+
+	        // ✅ Parse 12-hour input
+	        LocalTime startTime = LocalTime.parse(request.getStartTime().toUpperCase(), formatter);
+	        LocalTime endTime = LocalTime.parse(request.getEndTime().toUpperCase(), formatter);
+
+	        // ✅ Set basic fields
 	        wh.setDayOfWeek(day);
-	        wh.setStartTime(LocalTime.parse(request.getStartTime()));
-	        wh.setEndTime(LocalTime.parse(request.getEndTime()));
+	        wh.setStartTime(startTime);
+	        wh.setEndTime(endTime);
 	        wh.setSlotDuration(request.getSlotDuration());
+
+	        // 🔥 NEW: Set pricing
+	        wh.setMorningPrice(request.getMorningPrice());
+	        wh.setAfternoonPrice(request.getAfternoonPrice());
 
 	        workingHoursRepository.save(wh);
 
 	        response.setStatusCode(200);
-	        response.setMessage("Working hours saved successfully");
+	        response.setMessage("Working hours & pricing saved successfully");
 	        response.setData(wh);
 
 	    } catch (Exception e) {

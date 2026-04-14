@@ -20,6 +20,9 @@ public class WorkingHours {
     private LocalTime endTime;
 
     private Integer slotDuration; // minutes
+    
+    private Double morningPrice;
+    private Double afternoonPrice;
 
 	public Long getId() {
 		return id;
@@ -60,6 +63,21 @@ public class WorkingHours {
 	public void setSlotDuration(Integer slotDuration) {
 		this.slotDuration = slotDuration;
 	}
-    
+
+	public Double getMorningPrice() {
+		return morningPrice;
+	}
+
+	public void setMorningPrice(Double morningPrice) {
+		this.morningPrice = morningPrice;
+	}
+
+	public Double getAfternoonPrice() {
+		return afternoonPrice;
+	}
+
+	public void setAfternoonPrice(Double afternoonPrice) {
+		this.afternoonPrice = afternoonPrice;
+	}
     
 }
