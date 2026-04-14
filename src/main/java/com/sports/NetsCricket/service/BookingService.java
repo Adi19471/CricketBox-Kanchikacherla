@@ -207,15 +207,27 @@ public class BookingService implements IBookingService {
                 temp = next;
             }
 
-            // 4. Booked slots (12-hour format)
-            List<Map<String, String>> bookedSlots = bookings.stream().map(b -> {
-                Map<String, String> map = new HashMap<>();
-                map.put("startTime", b.getStartTime().format(formatter));
-                map.put("endTime", b.getEndTime().format(formatter));
-                return map;
-            }).toList();
+			// 4. Booked slots (12-hour format)
+			List<Map<String, Object>> bookedSlots = bookings.stream().map(b -> {
 
-            // 5. Available slots (with session + price retained)
+				Map<String, Object> map = new HashMap<>();
+
+				map.put("startTime", b.getStartTime().format(formatter));
+				map.put("endTime", b.getEndTime().format(formatter));
+
+				// ✅ session (optional but good for UI)
+				String session = b.getStartTime().isBefore(LocalTime.NOON) ? "MORNING" : "AFTERNOON";
+				map.put("session", session);
+
+				// 🔥 IMPORTANT: price = 0
+				map.put("price", 0);
+
+				return map;
+
+			}).toList();
+
+            
+			// 5. Available slots (with session + price retained)
             List<Map<String, Object>> availableSlots = allSlots.stream()
                     .filter(slot -> bookings.stream().noneMatch(b ->
                             isOverlap(
