@@ -2,6 +2,8 @@ package com.sports.NetsCricket.service;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +16,10 @@ import com.sports.NetsCricket.dto.BookingRequest;
 import com.sports.NetsCricket.dto.Response;
 import com.sports.NetsCricket.entity.Booking;
 import com.sports.NetsCricket.entity.User;
+import com.sports.NetsCricket.entity.WorkingHours;
 import com.sports.NetsCricket.repo.BookingRepository;
 import com.sports.NetsCricket.repo.UserRepository;
+import com.sports.NetsCricket.repo.WorkingHoursRepository;
 import com.sports.NetsCricket.service.interfac.IBookingService;
 
 @Service
@@ -26,6 +30,9 @@ public class BookingService implements IBookingService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private WorkingHoursRepository workingHoursRepository;
 
     // 🔥 PRICE PER HOUR (you can move to DB later)
     private static final double PRICE_PER_HOUR = 500;
@@ -153,19 +160,65 @@ public class BookingService implements IBookingService {
 
         try {
 
+            // ✅ 1. Get working hours (from master table)
+            String day = bookingDate.getDayOfWeek().name();
+
+            WorkingHours wh = workingHoursRepository.findByDayOfWeek(day)
+                    .orElseThrow(() -> new RuntimeException("Working hours not set"));
+
+            LocalTime start = wh.getStartTime();
+            LocalTime end = wh.getEndTime();
+            int duration = wh.getSlotDuration(); // ex: 30 mins
+
+            // ✅ 2. Get booked slots
             List<Booking> bookings = bookingRepository.findByBookingDate(bookingDate);
 
-            // Convert to simple DTO 
-            List<Map<String, Object>> slots = bookings.stream().map(b -> {
-                Map<String, Object> map = new HashMap<>();
-                map.put("startTime", b.getStartTime());
-                map.put("endTime", b.getEndTime());
+            // ✅ 3. Generate ALL slots (this is your allSlots)
+            List<Map<String, String>> allSlots = new ArrayList<>();
+
+            LocalTime temp = start;
+
+            while (temp.isBefore(end)) {
+
+                LocalTime next = temp.plusMinutes(duration);
+
+                Map<String, String> slot = new HashMap<>();
+                slot.put("startTime", temp.toString());
+                slot.put("endTime", next.toString());
+
+                allSlots.add(slot);
+
+                temp = next;
+            }
+
+            // ✅ 4. Booked slots
+            List<Map<String, String>> bookedSlots = bookings.stream().map(b -> {
+                Map<String, String> map = new HashMap<>();
+                map.put("startTime", b.getStartTime().toString());
+                map.put("endTime", b.getEndTime().toString());
                 return map;
             }).toList();
 
+            // ✅ 5. Available slots (remove overlaps)
+            List<Map<String, String>> availableSlots = allSlots.stream()
+                    .filter(slot -> bookings.stream().noneMatch(b ->
+                            isOverlap(
+                                    slot.get("startTime"),
+                                    slot.get("endTime"),
+                                    b.getStartTime().toString(),
+                                    b.getEndTime().toString()
+                            )
+                    ))
+                    .toList();
+
+            // ✅ 6. Final response
+            Map<String, Object> result = new HashMap<>();
+            result.put("booked", bookedSlots);
+            result.put("available", availableSlots);
+
             response.setStatusCode(200);
-            response.setMessage("Booked slots fetched");
-            response.setData(slots);
+            response.setMessage("Slots fetched successfully");
+            response.setData(result);
 
         } catch (Exception e) {
             response.setStatusCode(500);
@@ -174,5 +227,16 @@ public class BookingService implements IBookingService {
         }
 
         return response;
+    }
+    
+    
+    private boolean isOverlap(String s1, String e1, String s2, String e2) {
+
+        LocalTime start1 = LocalTime.parse(s1);
+        LocalTime end1 = LocalTime.parse(e1);
+        LocalTime start2 = LocalTime.parse(s2);
+        LocalTime end2 = LocalTime.parse(e2);
+
+        return start1.isBefore(end2) && start2.isBefore(end1);
     }
 }
