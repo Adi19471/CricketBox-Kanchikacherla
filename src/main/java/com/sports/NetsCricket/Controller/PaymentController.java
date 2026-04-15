@@ -38,4 +38,13 @@ public class PaymentController {
 
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
+    
+    
+    
+    @PostMapping("/create-payment-link/{bookingId}")
+    public ResponseEntity<Response> createPaymentLink(@PathVariable Long bookingId) {
+
+        Response response = paymentService.createPaymentLink(bookingId);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
 }

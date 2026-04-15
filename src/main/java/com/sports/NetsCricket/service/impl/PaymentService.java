@@ -14,9 +14,12 @@ import com.razorpay.Utils;
 import com.sports.NetsCricket.dto.Response;
 import com.sports.NetsCricket.entity.Booking;
 import com.sports.NetsCricket.entity.Payment;
+import com.sports.NetsCricket.entity.User;
 import com.sports.NetsCricket.repo.BookingRepository;
 import com.sports.NetsCricket.repo.PaymentRepository;
 import com.sports.NetsCricket.service.interfac.IPaymentService;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Service
 public class PaymentService implements IPaymentService {
@@ -31,6 +34,12 @@ public class PaymentService implements IPaymentService {
     private PaymentRepository paymentRepository;
 
     private static final String SECRET = "xX5N33FYgBcHV0m99MIiWxmq";
+    
+    @Value("${razorpay.key.secret}")
+    private String keySecret;
+
+    @Value("${razorpay.key.id}")
+    private String keyId;
 
     // ✅ CREATE ORDER
     @Override
@@ -122,6 +131,80 @@ public class PaymentService implements IPaymentService {
 
             response.setStatusCode(200);
             response.setMessage("Payment successful");
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage(e.getMessage());
+        }
+
+        return response;
+    }
+    
+    
+    @Override
+    public Response createPaymentLink(Long bookingId) {
+
+        Response response = new Response();
+
+        try {
+
+            // ✅ Get booking
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+            // ✅ Get user from booking
+            User user = booking.getUser();
+
+            if (user == null) {
+                throw new RuntimeException("User not found for booking");
+            }
+
+            // ✅ Create Razorpay client
+            RazorpayClient client = new RazorpayClient(keyId, keySecret);
+
+            // ✅ Request object
+            JSONObject request = new JSONObject();
+            request.put("amount", (int) (booking.getAmount() * 100));
+            request.put("currency", "INR");
+
+            // ✅ Customer details from USER entity
+            JSONObject customer = new JSONObject();
+            customer.put("name", user.getName());     // 👈 change based on your User fields
+            customer.put("email", user.getEmail());
+            customer.put("contact", user.getPhoneNumber());
+
+            request.put("customer", customer);
+
+            // ✅ Notification
+            JSONObject notify = new JSONObject();
+            notify.put("sms", true);
+            notify.put("email", true);
+            request.put("notify", notify);
+
+			/*
+			 * // ✅ Callback request.put("callback_url",
+			 * "http://localhost:8080/payment-success"); request.put("callback_method",
+			 * "get");
+			 */
+
+            // ✅ Create payment link
+            com.razorpay.PaymentLink paymentLink = client.paymentLink.create(request);
+
+            // ✅ Save payment
+            Payment payment = new Payment();
+            payment.setBooking(booking);
+            payment.setAmount(booking.getAmount());
+            payment.setStatus("CREATED");
+            payment.setRazorpayOrderId(paymentLink.get("id"));
+
+            paymentRepository.save(payment);
+
+            // ✅ Response
+            Map<String, Object> data = new HashMap<>();
+            data.put("paymentLink", paymentLink.get("short_url"));
+
+            response.setStatusCode(200);
+            response.setData(data);
 
         } catch (Exception e) {
             response.setStatusCode(500);

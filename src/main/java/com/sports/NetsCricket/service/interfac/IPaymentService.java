@@ -7,4 +7,6 @@ public interface IPaymentService {
     Response createOrder(Long bookingId);
 
     Response verifyPayment(String orderId, String paymentId, String signature);
+
+	Response createPaymentLink(Long bookingId);
 }
